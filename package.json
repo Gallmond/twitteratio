@@ -1,0 +1,21 @@
+{
+  "name": "twitteratio",
+  "version": "0.0.1",
+  "description": "Tool to find the most The Ratio tweets in you and your friends and followers timelines",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": "6.11.4"
+  },
+  "author": "Gavin",
+  "license": "ISC",
+  "dependencies": {
+    "connect-mongodb-session": "^1.4.0",
+    "ejs": "^2.5.7",
+    "express": "^4.16.2",
+    "express-session": "^1.15.6",
+    "mongodb": "^3.0.0-rc0"
+  }
+}

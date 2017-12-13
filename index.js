@@ -457,7 +457,7 @@ var twitterApiRequest = (_method, _endpoint, _paramsObj, _oAuth_token, _oAuth_to
 			var thisVal = encodeURIComponent(oAuthComponents[key]);
 			Authorization_header_arr.push(key+'="'+thisVal+'"');
 		}
-		Authorization_header_arr.push('oauth_signature="'+encodeURIComponent(signature)+'"');
+		Authorization_header_arr.push('oauth_signature="'+encodeURIComponent(SIGNATURE)+'"');
 		
 		var AUTHORIZATION_HEADER_STR = Authorization_header_arr.join(", ");
 		AUTHORIZATION_HEADER_STR = "OAuth "+AUTHORIZATION_HEADER_STR;
@@ -489,7 +489,7 @@ var twitterApiRequest = (_method, _endpoint, _paramsObj, _oAuth_token, _oAuth_to
 		
 				console.log("end of request ["+response.statusCode+" "+resString+"]");
 
-				return resolve({success: "request ended", status:response.statusCode, data:resString});
+				return resolve({success: "request ended", headers: response.headers, status:response.statusCode, data:resString});
 
 			});
 		});

@@ -91,6 +91,31 @@ app.get('/oauth_test', (req,res)=>{
 
 });
 
+app.get('/oAuth_return', (req,res)=>{
+	console.log("======= oAuth_return start =======");
+
+	console.log("ssn", ssn);
+
+	// attempt GET followers/ids
+	var apiOptions = {
+		count: 20,
+		stringify_ids: true,
+		screen_name: "__________gavin"
+	}
+
+	twitterApiRequest("GET", "followers/ids", apiOptions, ssn.user_oauth_token, ssn.user_oauth_token_secret).then((obj)=>{
+		// twitterApiRequest resolve
+		console.log("RESOLVED", obj);
+		res.send("RESOLVED")
+
+	},(obj)=>{
+		// twitterApiRequest reject	
+		console.log("REJECTED", obj);
+		res.send("REJECTED");
+
+	});
+
+});
 
 app.get('/test', (req,res)=>{
 	console.log("Hello, this is a test");
@@ -113,7 +138,7 @@ app.listen(app.get('port'), function() {
 
 
 
-
+var orderAttempts = []; 
 var oAuthTestFunction = (req,res)=>{
 
 	var start_timestamp = new Date().valueOf();
@@ -151,7 +176,7 @@ var oAuthTestFunction = (req,res)=>{
 
 	// 2) Sort the list of parameters alphabetically [1] by encoded key [2].
 	keys_array.sort();
-	
+
 	// 3) For each key/value pair:
 	var output_string_arr = [];
 	for(var i = 0; i<keys_array.length; i++){
@@ -200,7 +225,7 @@ var oAuthTestFunction = (req,res)=>{
 	// that there are some flows, such as when obtaining a request token, where the token secret is not yet known.
 	// In this case, the signing key should consist of the percent encoded consumer secret followed by an ampersand character ‘&’.
 	var signing_key = encodeURIComponent(consumer_secret)+"&"+encodeURIComponent(oauth_token_secret);
-	console.log("\r\nsigning_key:\r\n", signing_key);
+	console.log("\r\nsigning_key (ecoded consumer_secret & encoded oauth_token_secret (not yet known)):\r\n", signing_key);
 
 	// ==== signature
 	// Finally, the signature is calculated by passing the signature base string and signing key to the HMAC-SHA1 hashing algorithm.
@@ -224,19 +249,20 @@ var oAuthTestFunction = (req,res)=>{
 	Authorization_header_arr.push('oauth_signature="'+encodeURIComponent(signature)+'"');
 	
 	// MANUAL HEADER START
-	var Authorization_header_arr = [];
-	Authorization_header_arr.push('oauth_nonce="'+encodeURIComponent(oAuthComponents["oauth_nonce"])+'"');
-	Authorization_header_arr.push('oauth_callback="'+encodeURIComponent(oAuthComponents["oauth_callback"])+'"');
-	Authorization_header_arr.push('oauth_signature_method="'+encodeURIComponent(oAuthComponents["oauth_signature_method"])+'"');
-	Authorization_header_arr.push('oauth_timestamp="'+encodeURIComponent(oAuthComponents["oauth_timestamp"])+'"');
-	Authorization_header_arr.push('oauth_consumer_key="'+encodeURIComponent(oAuthComponents["oauth_consumer_key"])+'"');
-	Authorization_header_arr.push('oauth_signature="'+encodeURIComponent(signature)+'"');
-	Authorization_header_arr.push('oauth_version="'+encodeURIComponent(oAuthComponents["oauth_version"])+'"');
-	// MANUAL HEADER END
+	// var Authorization_header_arr = [];
+	// Authorization_header_arr.push('oauth_nonce="'+encodeURIComponent(oAuthComponents["oauth_nonce"])+'"');
+	// Authorization_header_arr.push('oauth_callback="'+encodeURIComponent(oAuthComponents["oauth_callback"])+'"');
+	// Authorization_header_arr.push('oauth_signature_method="'+encodeURIComponent(oAuthComponents["oauth_signature_method"])+'"');
+	// Authorization_header_arr.push('oauth_timestamp="'+encodeURIComponent(oAuthComponents["oauth_timestamp"])+'"');
+	// Authorization_header_arr.push('oauth_consumer_key="'+encodeURIComponent(oAuthComponents["oauth_consumer_key"])+'"');
+	// Authorization_header_arr.push('oauth_signature="'+encodeURIComponent(signature)+'"');
+	// Authorization_header_arr.push('oauth_version="'+encodeURIComponent(oAuthComponents["oauth_version"])+'"');
+	// MANUAL HEADER END 
+
 	
 
 	var Authorization_header_str = Authorization_header_arr.join(", ");
-	Authorization_header_str = "oAuth "+Authorization_header_str;
+	Authorization_header_str = "OAuth "+Authorization_header_str;
 	console.log("\r\nAuthorization_header_str:\r\n", Authorization_header_str);
 
 	// var POSTDataStr = "oauth_callback="+encodeURIComponent("https://twitteratio.herokuapp.com/oAuth_return"); // see https://apps.twitter.com/app/14577985/settings
@@ -268,7 +294,30 @@ var oAuthTestFunction = (req,res)=>{
 		});
 		response.on('end', ()=>{
 			console.log("\r\nrequest finished with response:\r\n", response.statusCode, resString);
-			res.send("end of request ["+response.statusCode+" "+resString+"]");
+			if(response.statusCode!=200){
+				res.send("end of request ["+response.statusCode+" "+resString+"]");
+			}
+
+			// success like:
+			// end of request [200 oauth_token=HXy3jAAAAAAA3nFBAAABYFF0mN4&oauth_token_secret=dKkg62IiumCjbNHQsSYdPkcxR3G4j3qw&oauth_callback_confirmed=true]
+
+			var responseVariables_1 = resString.split("&"); // ["oauth_token=HXy3jAAAAAAA3nFBAAABYFF0mN4", "oauth_token_secret=dKkg62IiumCjbNHQsSYdPkcxR3G4j3qw", "oauth_callback_confirmed=true"]
+			var responseVariables = {};
+			for(var i=0; i<responseVariables_1.length; i++ ){
+				var split = responseVariables_1[i].split("=");
+				var left = split[0];
+				var right = split[1];
+				responseVariables[left] = right;
+			}
+
+			ssn.user_oauth_token = responseVariables["oauth_token"];
+			ssn.user_oauth_token_secret = responseVariables["oauth_token_secret"];
+
+			res.redirect("https://api.twitter.com/oauth/authenticate?oauth_token="+responseVariables["oauth_token"]);
+			
+			// returns to
+			// https://twitteratio.herokuapp.com/oAuth_return?oauth_token=BU7WRQAAAAAA3nFBAAABYFGK4eY&oauth_verifier=GMlvi6JZlBz8wF6irylVrqbpaxiD189e
+
 		});
 	});
 
@@ -291,3 +340,162 @@ var oAuthTestFunction = (req,res)=>{
 
 
 }// oAuthTestFunction end
+
+
+
+function shuffleAssociativeArray(_obj){
+	var obj_keys = Object.keys(_obj);
+	var j, x, i;
+	for (i = obj_keys.length - 1; i > 0; i--) {
+		j = Math.floor(Math.random() * (i + 1));
+		x = obj_keys[i];
+		obj_keys[i] = obj_keys[j];
+		obj_keys[j] = x;
+	}
+	var new_ob = {};
+	for(var z = 0; z < obj_keys.length; z++){
+		new_ob[obj_keys[z]] = _obj[obj_keys[z]];
+	}
+	return new_ob;
+}
+
+
+
+
+
+
+// like twitterApiRequest("GET", "statuses/home_timeline", {"exclude_replies":"true", "include_entities":"true"}, "BU7WRQAAAAAA3nFBAAABYFGK4eY");
+var twitterApiRequest = (_method, _endpoint, _paramsObj, _oAuth_token, _oAuth_token_secret)=>{
+	return new Promise((resolve, reject)=>{
+
+		// validation
+		if(_method!="POST" || _method!="GET"){
+			return reject({error:"invalid method"});
+		}
+
+		if(_oAuth_token==undefined || _oAuth_token!=""){
+			return reject({error:"invalid oAuth_token"});
+		}
+
+		// create GET string
+		var request_querystring_arr = [];
+		for(key in _paramsObj){
+			request_querystring_arr.push(encodeURIComponent(key)+"="+encodeURIComponent(_paramsObj[key]));
+		}
+		var request_querystring = request_querystring_arr.join("&");
+
+		// ===== first we need to get a request token from POST oauth/request_token
+		// to assemble this header (https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature): 
+		var start_timestamp = new Date().valueOf();
+		var oAuthComponents = {};
+		var requestComponents = {};
+
+		// get the method and url
+		var request_method = _method;
+		var request_url = "https://api.twitter.com/"+_endpoint;
+		var request_domain = "api.twitter.com";
+		var request_path = "/"+_endpoint;
+
+		// append GET params to url
+		if(_method=="GET"){
+			request_url += "?"+request_querystring;
+		}
+
+		requestComponents = _paramsObj;
+
+		// In addition to the request parameters, every oauth_* parameter needs to be included in the signature, so collect those too
+		oAuthComponents["oauth_consumer_key"] = process.env.TWITTER_CONSUMER_KEY;
+		oAuthComponents["oauth_nonce"] = Math.random().toString(36).substring(7);
+		oAuthComponents["oauth_signature_method"] = "HMAC-SHA1";
+		oAuthComponents["oauth_timestamp"] = (start_timestamp/1000).toFixed(0);
+		oAuthComponents["oauth_version"] = "1.0";
+		oAuthComponents["oauth_token"] = _oAuth_token;
+
+		// combine oauth* and request params
+		var params_encoded = {};
+		var keys_array = [];
+		for(key in oAuthComponents){
+			params_encoded[encodeURIComponent(key)] = encodeURIComponent(oAuthComponents[key]);
+			keys_array.push(encodeURIComponent(key));
+		}
+		for(key in requestComponents){
+			params_encoded[encodeURIComponent(key)] = encodeURIComponent(requestComponents[key]);
+			keys_array.push(encodeURIComponent(key));
+		}
+
+		// sord keylist alphabetically
+		keys_array.sort();
+
+		// build param string
+		var output_string_arr = [];
+		for(var i = 0; i<keys_array.length; i++){
+			var this_string_part = keys_array[i]+"="+params_encoded[keys_array[i]];
+			output_string_arr.push(this_string_part);
+		}
+
+		var PARAMETER_STRING = output_string_arr.join("&");
+
+		var SIGNATURE_BASE_STRING = "";
+		SIGNATURE_BASE_STRING+= request_method;
+		SIGNATURE_BASE_STRING+= "&";
+		SIGNATURE_BASE_STRING+= encodeURIComponent(request_url);
+		SIGNATURE_BASE_STRING+= "&";
+		SIGNATURE_BASE_STRING+= encodeURIComponent(PARAMETER_STRING);
+
+		var SIGNING_KEY = encodeURIComponent(process.env.TWITTER_CONSUMER_SECRET)+"&"+encodeURIComponent(_oAuth_token_secret);
+		
+		var crypto = require('crypto');
+		var SIGNATURE = crypto.createHmac('sha1', SIGNING_KEY).update(SIGNATURE_BASE_STRING).digest('base64');
+
+		// build header
+		var Authorization_header_arr = [];
+		for(key in oAuthComponents){
+			var thisVal = encodeURIComponent(oAuthComponents[key]);
+			Authorization_header_arr.push(key+'="'+thisVal+'"');
+		}
+		Authorization_header_arr.push('oauth_signature="'+encodeURIComponent(signature)+'"');
+		
+		var AUTHORIZATION_HEADER_STR = Authorization_header_arr.join(", ");
+		AUTHORIZATION_HEADER_STR = "OAuth "+AUTHORIZATION_HEADER_STR;
+
+		// make HTTP request
+		var request_headers = {
+				'Authorization': AUTHORIZATION_HEADER_STR,
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Content-Length': request_querystring.length,
+			}
+
+		var thisHttpsOptions = {
+			host: request_domain,
+			path: request_path,
+			method: request_method,
+			headers: request_headers,
+		}
+
+		// make request
+		https = require('https');
+		var httpsRequest = https.request(thisHttpsOptions, (response)=>{
+			var resString = "";
+			var resChunks = [];
+			response.on('data', (chunk)=>{
+				resString += chunk;
+				resChunks.push(chunk);
+			});
+			response.on('end', ()=>{
+		
+				console.log("end of request ["+response.statusCode+" "+resString+"]");
+
+				return resolve({success: "request ended", status:response.statusCode, data:resString});
+
+			});
+		});
+
+		httpsRequest.on("error", (e)=>{
+			console.log(e);
+			return reject({error: "error in httprequest", details: e.message});
+		})
+
+		// httpsRequest.write(POSTDataStr);
+		httpsRequest.end();
+	});
+}

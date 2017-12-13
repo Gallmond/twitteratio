@@ -373,12 +373,12 @@ var twitterApiRequest = (_method, _endpoint, _paramsObj, _oAuth_token, _oAuth_to
 			return reject({error:"invalid method"});
 		}
 
-		if(_oAuth_token==undefined || _oAuth_token!=""){
-			return reject({error:"invalid oAuth_token"});
+		if(_oAuth_token==undefined || _oAuth_token==""){
+			return reject({error:"invalid oAuth_token", details:"token ["+_oAuth_token+"]"});
 		}
 
-		if(_oAuth_token_secret==undefined || _oAuth_token_secret!=""){
-			return reject({error:"invalid oAuth_token_secret"});
+		if(_oAuth_token_secret==undefined || _oAuth_token_secret==""){
+			return reject({error:"invalid oAuth_token_secret", details:"token ["+_oAuth_token_secret+"]"});
 		}
 
 		// create GET string

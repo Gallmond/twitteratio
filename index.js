@@ -369,7 +369,7 @@ var twitterApiRequest = (_method, _endpoint, _paramsObj, _oAuth_token, _oAuth_to
 	return new Promise((resolve, reject)=>{
 
 		// validation
-		if(_method!="POST" || _method!="GET"){
+		if(_method!="POST" && _method!="GET"){
 			return reject({error:"invalid method"});
 		}
 

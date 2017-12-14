@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>TwitteRatio</title>
+  </head>
+  <body>
+  
+  	<h1>Welcome to TwitteRatio</h1>
+  		<p>Please enter a twitter handle in the box and press enter.</p>
+  		<% if(!is_authorised){ %>
+  			<p>You will be redirected to twitter for Authorisation before you can do owt.</p>
+  		<% } %>
+  		
+
+  		<form>
+  			<input type="text" placeholder="@Replies_RTs"></input>
+  			<% if(is_authorised){ %>
+  				<button type="submit">Search.</button>
+  			<% }else{ %>
+  				<button type="submit">Authorise.</button>
+  			<% } %>
+  			
+  		</form>
+
+  </body>
+</html>

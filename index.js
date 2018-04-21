@@ -13,8 +13,8 @@ if(!process.env.APP_ENVIRONMENT || process.env.APP_ENVIRONMENT=="local"){
 var assert = require('assert');
 
 // routing
-express = require('express')
-;app = express();
+express = require('express');
+app = express();
 
 // database
 mongo = require('mongodb'); // no var let or const for decoding
@@ -205,13 +205,26 @@ app.get('/oAuth_return', (req,res)=>{
 				// attempt GET followers/ids
 				var apiOptions = {
 					count: 20,
-					user_id: "936781617892339712"
+					screen_name: "dril"
 				}
 
 				console.log("\r\n twitterApiRequest(\"GET\", \"1.1/statuses/user_timeline.json\", apiOptions, obj.oauth_token, obj.oauth_token_secret)");
 				twitter.twitterApiRequest("GET", "1.1/statuses/user_timeline.json", apiOptions, dec(ssn.oauth.user_oauth_token), dec(ssn.oauth.user_oauth_token_secret)).then((obj)=>{
 					// twitterApiRequest resolve
 					
+					var jsonData = JSON.parse(obj.data);
+
+					console.log("JSON START");
+					console.log("JSON START");
+					console.log("JSON START");
+					console.log("JSON START\r\n");
+					console.log(jsonData);
+					console.log("\r\nJSON END");
+					console.log("JSON END");
+					console.log("JSON END");
+					console.log("JSON END");
+
+
 					console.log("\r\n twitterApiRequest resolved: ", obj);
 					return resolve({success:"got tweets", data:obj.data});
 
@@ -223,10 +236,32 @@ app.get('/oAuth_return', (req,res)=>{
 		}
 
 
+		var getSingleTweet = ()=>{
+			return new Promise((resolve, reject)=>{
+
+				https://twitter.com/__________Gavin/status/976037306967699456
+				var apiOptions = {
+					id: "976037306967699456",
+					include_entities: true
+				}
+				twitter.twitterApiRequest("POST", "1.1/statuses/lookup.json", apiOptions, dec(ssn.oauth.user_oauth_token), dec(ssn.oauth.user_oauth_token_secret)).then((obj)=>{
+					// twitterApiRequest resolve
+					
+					console.log("\r\n twitterApiRequest resolved: ", obj);
+					return resolve({success:"got tweet info", data:obj.data});
+
+				},(obj)=>{
+					return reject(obj);
+				});
+			});
+		};
+
+
 		var asyncJobs = [
-			getFollowerIDs(),
-			getFriendIDs(),
-			getUserTimeline()
+			// getFollowerIDs(),
+			// getFriendIDs(),
+			// getUserTimeline()
+			getSingleTweet()
 		];
 
 		Promise.all(asyncJobs).then((obj)=>{
@@ -305,6 +340,9 @@ app.get('/z_oAuth_return', (req,res)=>{ // oauth_token=tiJ7PwAAAAAA3nFBAAABYFHfG
 
 app.get('/test', (req,res)=>{
 	res.send("Hello");
+
+	// return json from one tweet
+
 });
 
 
